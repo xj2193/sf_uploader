@@ -86,7 +86,7 @@ def main():
     journey_dict = journey_df_merge.to_dict('records')
 
     insert_journey_sf(sf_api, journey_dict)
-    return 'Insert done'
+    return 'Insert done haha'
 
 
 main()
