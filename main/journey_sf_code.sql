@@ -1,11 +1,12 @@
 select top(50)
 	---[PMI ID] as HP_PMI_ID__c,
 	b.HP_PMI_ID__c,
-	b.HP_PMI_ID__c as Name,
+	---b.HP_PMI_ID__c as Name,
 	 ---'0010a00001Qa6gPAAR' as AccountId ---Primary Organization Columbia,
 	[Participant Status] as HP_Participant_Status__c,
-	'NEW' as StageName,
-	[General Consent Date] as CloseDate,
+	---'NEW' as StageName,
+	---[General Consent Date] as CloseDate,
+	c.Journey_Id,
 
 	case [General Consent Status]
 		when 1 then 1
@@ -164,6 +165,9 @@ select top(50)
 	[PMI ID_HP] as PMI_ID_2
 	from [dm_aou].[dbo].[vw_reporting_base])b on a.[PMI ID] = b.PMI_ID_2
 
+	left outer join(
+	select r.PMI_ID, r.Journey_Id 
+	from [aou_sf].[dbo].[Relationship] r) c on b.HP_PMI_ID__c = c.PMI_ID
 	where [PMI ID] in
 	('P100416414',
 	 'P100428294',
