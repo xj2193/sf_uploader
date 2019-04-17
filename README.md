@@ -16,7 +16,7 @@ Salesforce Account (Production and Sandbox)
 AOU SQL Database Settings (Driver, Server and Windows Authentication)  
 [simple-salesforce API](https://pypi.org/project/simple-salesforce/)  
 
-## Installation
+## How to START?
 
 Build up database and create three tabels to maintain information consistency:
 * Contact_PMI table (extract Contact_Id and PMI_ID from Salesforce and insert in this table )
