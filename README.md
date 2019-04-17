@@ -16,5 +16,14 @@ Salesforce Account (Production and Sandbox)
 AOU SQL Database Settings (Driver, Server and Windows Authentication)  
 [simple-salesforce API](https://pypi.org/project/simple-salesforce/)  
 
+## Installation
+please run the below sript in your shell to install all the packages 
+```python
+$ pip install -r requirements.txt
+```
+
+## Diagram of Data Flow
+
+
 
 ## Others...
