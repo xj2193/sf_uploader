@@ -46,8 +46,4 @@ please run the below sript in your shell to install all the packages
 $ pip install -r requirements.txt
 ```
 
-## Diagram of Data Flow
-
-
-
 ## Others...
