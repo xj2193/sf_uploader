@@ -16,6 +16,10 @@ Salesforce Account (Production and Sandbox)
 AOU SQL Database Settings (Driver, Server and Windows Authentication)  
 [simple-salesforce API](https://pypi.org/project/simple-salesforce/)  
 
+## Workflow
+
+![alt text](https://gitbucket.sis.nyp.org/pmi-hpo-admin/salesforce_api_hpo/raw/master/Salesforce%20Uploading%20Process.png)
+
 ## How to START?
 
 Build up database and create three tabels to maintain information consistency:
