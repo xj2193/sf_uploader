@@ -18,11 +18,19 @@ AOU SQL Database Settings (Driver, Server and Windows Authentication)
 
 ## Workflow
 
+#### Data Flow Diagram
 ![alt text](https://gitbucket.sis.nyp.org/pmi-hpo-admin/salesforce_api_hpo/raw/master/Salesforce%20Uploading%20Process.png)
 
-## How to START?
+#### Steps for Data Extraction and Uploading
+1. Build up database and create three tables to maintain information consistency.  
+2. Extract contact information from local database and create a participant contact data set.  
+3. Compare the data set with existing Contact Table to see if it's already exist in the Salesforce. If the record exists, use an update function.   
+If not, use the insert function.   
+4. Once the contact data is upserted, a related journey record is created automatically in Salesforce.   
+5. Pull out journey and PMI ID table and save the data into local database.  
+6. Extract the journey data from database and update in Salesforce.  
 
-Build up database and create three tabels to maintain information consistency:
+#### Tables Built in Local Database 
 * Contact_PMI table (extract Contact_Id and PMI_ID from Salesforce and insert in this table )
 
 |Contact_Id   |PMI_Id       |
@@ -41,9 +49,8 @@ Build up database and create three tabels to maintain information consistency:
 |:------------|:------------|:------------|
 |AIEXZ0004    |P000000012   |EXES000347   |
 
-please run the below sript in your shell to install all the packages 
+## Instruction to Run the Scripts
+please run the below script in your shell to install all the packages 
 ```python
 $ pip install -r requirements.txt
 ```
-
-## Others...
