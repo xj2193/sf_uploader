@@ -1,8 +1,8 @@
-select top(50)
+select
 	---[PMI ID] as HP_PMI_ID__c,
 	b.HP_PMI_ID__c,
 	---b.HP_PMI_ID__c as Name,
-	 ---'0010a00001Qa6gPAAR' as AccountId ---Primary Organization Columbia,
+	'0010a00001Qa6gPAAR' as AccountId, ---Primary Organization Columbia,
 	[Participant Status] as HP_Participant_Status__c,
 	---'NEW' as StageName,
 	---[General Consent Date] as CloseDate,
@@ -158,20 +158,15 @@ select top(50)
 		else [Urine 90 mL Collection Date]
 	end as HP_Urine_90_ml_Collection_Date__c
 
-	from [dm_aou].[dbo].[healthpro] a
+	from [dm_aou].[dbo].[healthpro](nolock) a
 	
 	left outer join(
 	select concat('P00000',[Row_Id]) as HP_PMI_ID__c,
 	[PMI ID_HP] as PMI_ID_2
-	from [dm_aou].[dbo].[vw_reporting_base])b on a.[PMI ID] = b.PMI_ID_2
+	from [dm_aou].[dbo].[vw_reporting_base] (nolock))b on a.[PMI ID] = b.PMI_ID_2
 
 	left outer join(
-	select r.PMI_ID, r.Journey_Id 
-	from [aou_sf].[dbo].[Relationship] r) c on b.HP_PMI_ID__c = c.PMI_ID
-	where [PMI ID] in
-	('P100416414',
-	 'P100428294',
-	 'P100686729',
-	 'P100751043',
-	 'P100795163',
-	 'P100859870')
+	select r.PMI_ID, r.Journey_Id
+	from [aou_sf].[dbo].[Relationship] (nolock) r) c on b.HP_PMI_ID__c = c.PMI_ID
+
+	where c.Journey_Id is not null
