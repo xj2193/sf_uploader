@@ -50,7 +50,13 @@ If not, use the insert function.
 |AIEXZ0004    |P000000012   |EXES000347   |
 
 ## Instruction to Run the Scripts
-please run the below script in your shell to install all the packages 
+* Run the below script in your shell to install all the packages 
 ```python
 $ pip install -r requirements.txt
+```
+* Update the _setting.py file and rename it to setting.py
+
+* Run the following:
+```python
+$ python salesforce_api.py
 ```
