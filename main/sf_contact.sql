@@ -10,7 +10,7 @@ select top(50)
 	  ,concat(year([Date of Birth_HP]), '-01-01') as Birthdate
       ,[Street Address_HP] as MailingStreet
       ,[City_HP] as MailingCity
-      ---,'0010a00001Qa6gPAAR' as AccountId ---Primary Organization Columbia
+      ,'0010a00001Qa6gPAAR' as AccountId ---Primary Organization Columbia
       ,CASE WHEN [State_HP] = 'AL' THEN 'ALABAMA'
       WHEN [State_HP] = 'AR' THEN 'ARKANSAS'
       WHEN [State_HP] = 'AS' THEN 'AMERICAN SAMOA'
@@ -130,5 +130,5 @@ select top(50)
       ,'' as WCM_Scheduled_Visit_Date__c
       ,'' as CM_Secondary_Method_of_Contact__c
       ,'' as WCM_Enrolling_Research_Coordinator__c*/
-from [dm_aou].[dbo].[vw_reporting_base]
+from [dm_aou].[dbo].[vw_reporting_base](nolock)
 where org_RC = 'Columbia' and [PMI ID_HP] is not null and [Paired Site_HP] is not null
