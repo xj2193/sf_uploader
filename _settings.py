@@ -5,4 +5,5 @@ sf_username = 'email_address.DataLoad/AoUPartial'
 sf_password = 'password'
 sf_security_token = 'security token for the environment'
 result_root = 'folder to save the result errors'
+OwnerId = 'User ID in Salesforce who upload the data'
 
