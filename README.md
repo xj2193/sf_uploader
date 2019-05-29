@@ -19,7 +19,7 @@ AOU SQL Database Settings (Driver, Server and Windows Authentication)
 ## Workflow
 
 #### Data Flow Diagram
-![alt text](https://gitbucket.sis.nyp.org/pmi-hpo-admin/salesforce_api_hpo/raw/master/Salesforce%20Uploading%20Process.png)
+![](Salesforce%20Uploading%20Process.png)
 
 #### Steps for Data Extraction and Uploading
 1. Build up database and create three tables to maintain information consistency.  
