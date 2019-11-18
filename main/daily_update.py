@@ -71,6 +71,7 @@ def extract_contact_file(sf_api, sqlfile_name, platform_name):
     :return: dataframe
     """
     fd = open(os.path.join(settings.path, 'sqlserver/{}'.format(sqlfile_name)), 'r')
+    # path is the parent directory of the daily_update.py file
     if platform_name == 'salesforce':
         sqlfile = fd.read().format(settings.OwnerId, settings.PardotUser)
     elif platform_name == 'pardot':
@@ -181,6 +182,7 @@ def extract_journey_file(sf_api, sqlfile_name, platform_name):
     fd = open(os.path.join(settings.path, 'sqlserver/{}'.format(sqlfile_name)), 'r')
     if platform_name == 'salesforce':
         sqlfile = fd.read().format(settings.OwnerId, settings.PardotUser, settings.SovereignUser)
+        # include all participant journeys with owners: user, pardot connector and sovereign CRM
     elif platform_name == 'pardot':
         sqlfile = fd.read().format(settings.PardotUser)
     else:
@@ -276,6 +278,8 @@ def main():
 
     contact_amount = extract_data(engine_sf, 'sf_contact_update.sql').shape[0]
     while contact_amount > 1000:
+        # Check if the HPO pipeline is well loaded. There might be potential risk when the data is partially loaded. New
+        # feature is under development.
         print('The HealthPro API is still working')
         time.sleep(600)
         contact_amount = extract_data(engine_sf, 'sf_contact_update.sql').shape[0]
