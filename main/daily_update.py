@@ -6,6 +6,9 @@ import pandas as pd
 import urllib
 import datetime
 import os
+import sys
+import time
+sys.path.append('C:\\Users\\xj2193\\PycharmProjects\\sf_uploader\\main')
 import settings
 
 
@@ -53,7 +56,7 @@ def extract_data(engine, sql_file_name):
     :return: pandas dataframe
     """
     connect = engine.connect()
-    query = open(os.path.abspath(os.path.join(os.pardir, 'sqlserver', sql_file_name)), 'r')
+    query = open(os.path.join(settings.path, 'sqlserver/{}'.format(sql_file_name)), 'r')
     sql_file = query.read()
     query.close()
     df = pd.read_sql_query(sql_file, connect)
@@ -67,7 +70,7 @@ def extract_contact_file(sf_api, sqlfile_name, platform_name):
     :param platform_name: salesforce or pardot
     :return: dataframe
     """
-    fd = open(os.path.abspath(os.path.join(os.pardir, 'sqlserver', sqlfile_name)), 'r')
+    fd = open(os.path.join(settings.path, 'sqlserver/{}'.format(sqlfile_name)), 'r')
     if platform_name == 'salesforce':
         sqlfile = fd.read().format(settings.OwnerId, settings.PardotUser)
     elif platform_name == 'pardot':
@@ -175,9 +178,9 @@ def extract_journey_file(sf_api, sqlfile_name, platform_name):
     :param platform_name: salesforce or pardot
     :return: dataframe
     """
-    fd = open(os.path.abspath(os.path.join(os.pardir, 'sqlserver', sqlfile_name)), 'r')
+    fd = open(os.path.join(settings.path, 'sqlserver/{}'.format(sqlfile_name)), 'r')
     if platform_name == 'salesforce':
-        sqlfile = fd.read().format(settings.OwnerId, settings.PardotUser)
+        sqlfile = fd.read().format(settings.OwnerId, settings.PardotUser, settings.SovereignUser)
     elif platform_name == 'pardot':
         sqlfile = fd.read().format(settings.PardotUser)
     else:
@@ -211,9 +214,10 @@ def converter(o):
     :return: JSON representation
     """
     if isinstance(o, pd.Timestamp):
-        return o.strftime('%Y-%m-%d').__str__()
+        return o.isoformat().__str__()
+    # o.strftime('%Y-%m-%d').__str__()
     elif isinstance(o, datetime.date):
-        return o.__str__()
+        return o.isoformat().__str__()
 
 
 def delete_records(sf, record_type, record):
@@ -268,7 +272,15 @@ def main():
         print('Sql Server connected')
     except Exception as e:
         print(str(e))
+# ------------------------- Check if the HealthPro data is well loaded ------------------------------------------------#
 
+    contact_amount = extract_data(engine_sf, 'sf_contact_update.sql').shape[0]
+    while contact_amount > 1000:
+        print('The HealthPro API is still working')
+        time.sleep(600)
+        contact_amount = extract_data(engine_sf, 'sf_contact_update.sql').shape[0]
+    else:
+        print('HealthPro data is well loaded')
 # ------------------------- Extract contacts and journeys from Salesforce and save in local DB ------------------------#
 
     # extract all salesforce contacts and save it locally
@@ -293,20 +305,18 @@ def main():
     contact_pardot_log_file_update, num_of_pardot_record_update = update_contact_sf(sf_api,
                                                                                     json_load(pardot_contact_update_df))
     save_data(contact_pardot_log_file_update, engine_sf, 'v2_contact_log', 'append')
-    print('pardot contact inserted')
 
     # sf insert
     contact_insert_df = extract_data(engine_sf, 'sf_contact_insert.sql')
     contact_insert_df = contact_insert_df.drop(columns=['rowsha1', 'Id'])
     contact_sf_log_file_insert, num_of_sf_record_insert = insert_contact_sf(sf_api, json_load(contact_insert_df))
     save_data(contact_sf_log_file_insert, engine_sf, 'v2_contact_log', 'append')
-    print('sf contact inserted')
 
     # sf update
     contact_update_df = extract_data(engine_sf, 'sf_contact_update.sql')
+    contact_update_df = contact_update_df.drop(columns=['rowsha1'])
     contact_sf_log_file_update, num_of_sf_record_update = update_contact_sf(sf_api, json_load(contact_update_df))
     save_data(contact_sf_log_file_update, engine_sf, 'v2_contact_log', 'append')
-    print('sf contact updated')
 
 # --------------------------- Create relationship table of contact, PMI and journey -----------------------------------#
 
@@ -333,12 +343,36 @@ def main():
     journey_sf_log_file_update, num_of_sf_journey_update = update_journey_sf(sf_api, json_load(journey_update_df))
     save_data(journey_sf_log_file_update, engine_sf, 'v2_journey_log', 'append')
     print('journey updated')
-    # return number of records inserted/updated in different scenarios in this process
+
+    # update withdrawn participants
+    withdrawal_df = extract_data(engine_sf, 'withdrawal_participant_test.sql')
+    withdrawal_df_update = withdrawal_df[['Id', 'Contact__c', 'HP_Withdrawal_Date__c', 'HP_Withdrawal_Status__c']]
+    withdrawal_log_file_update, num_of_withdrawal_update = update_journey_sf(sf_api, json_load(withdrawal_df_update))
+    save_data(withdrawal_log_file_update, engine_sf, 'v2_journey_log', 'append')
+    print('withdrawal status updated')
+
+    # extract all salesforce contacts and save it locally again
+    df_contact_sf = extract_contact_file(sf_api, 'extract_sf_contact.sql', 'salesforce')
+    save_data(df_contact_sf, engine_sf, 'v2_sf_contact', 'replace')
+    print('sf contact data saved')
+
+    # extract all pardot contacts and save it locally
+    df_contact_pardot = extract_contact_file(sf_api, 'extract_pardot_contact.sql', 'pardot')
+    save_data(df_contact_pardot, engine_sf, 'v2_pardot_contact', 'replace')
+    print('pardot contact data saved')
+
+    # extract all journeys and save it locally
+    df_journey_sf = extract_journey_file(sf_api, 'extract_sf_journey.sql', 'salesforce')
+    save_data(df_journey_sf, engine_sf, 'v2_sf_journey_export', 'replace')
+    print('journey data saved')
+
     return print('{} of contacts inserted \n '
                  '{} of contacts updated \n '
                  '{} of pardot records updated \n '
-                 '{} of journeys updated'.format(num_of_sf_record_insert, num_of_sf_record_update,
-                                                 num_of_pardot_record_update, num_of_sf_journey_update))
+                 '{} of journeys updated \n '
+                 '{} of withdrawals updated \n'.format(num_of_sf_record_insert, num_of_sf_record_update,
+                                                       num_of_pardot_record_update, num_of_sf_journey_update,
+                                                       num_of_withdrawal_update))
 
 
 if __name__ == '__main__':

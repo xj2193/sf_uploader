@@ -29,4 +29,5 @@ SELECT [Id]
       ,[HP_Cell_Free_DNA_Collection_Date__c]
       ,[HP_Paxgene_RNA_Collection_Date__c]
       ,[HP_Urine_90_ml_Collection_Date__c]
-  FROM [aou_sf].[dbo].[v2_sf_journey_export_update]
+  FROM [aou_sf].[dbo].[v2_sf_journey_update_json]
+  WHERE [HP_Withdrawal_Status__c] = 0

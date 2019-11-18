@@ -31,4 +31,4 @@ HP_Cell_Free_DNA_Collection_Date__c,
 HP_Paxgene_RNA_Collection_Date__c,
 HP_Urine_90_ml_Collection_Date__c
 FROM Opportunity
-WHERE (OwnerId = '{}' or OwnerId = '{}')
+WHERE (OwnerId = '{}' or OwnerId = '{}' or OwnerId = '{}')
