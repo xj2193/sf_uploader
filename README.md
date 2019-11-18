@@ -92,7 +92,7 @@ Please refer to the [settings.py](https://github.com/xj2193/sf_uploader/blob/mas
 $ pip install -r requirements.txt
 ```
 * Modify and run view_create_script.sql in your local database to build up 7 views
-* Update the _setting.py file and rename it to setting.py
+* Update the _setting.py file and rename it to settings.py
 * Run the following:
 ```python
 $ python daily_update.py
