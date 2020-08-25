@@ -46,7 +46,7 @@ def main():
             print(str(e))
         try:
             query = "select 1 as test"
-            conn = connect_sql_server(db_settings)
+            conn = connect_sql_server(db_settings, db_settings['database_aou'])
             test_df = execute_sql_query(conn, query)
             if test_df.shape[0] >= 1:
                 print('Sql Server connected')
@@ -63,16 +63,18 @@ def main():
         while record_amount <= 100:
             print('The HealthPro API is still working')
             time.sleep(600)
-            record_amount = connect_sql_server(db_settings, record_count_query).shape[0]
+            record_amount = execute_sql_query(conn, record_count_query).shape[0]
         else:
             print('HealthPro and REDCap data is well loaded ')
 
         # ------------------------- Extract contacts and journeys from Salesforce and save in local DB ------------------------#
 
         # extract all salesforce contacts and save it locally
+        sf_conn = connect_sql_server(db_settings, db_settings['database_sf'])
         print('Start extracting contact data')
         df_contact_sf = sfext(sf_api, 'extract_contact.sql', 'salesforce', 'contact', sf_settings).extract_data_sf()
-        save_data(conn, df_contact_sf, 'sf_contact', 'replace')
+
+        save_data(sf_conn, df_contact_sf, 'sf_contact', 'replace')
 
         print('Start extracting pardot contact data')
         # extract all pardot contacts and save it locally
@@ -81,7 +83,7 @@ def main():
                                   'pardot',
                                   'contact',
                                   sf_settings).extract_data_sf()
-        save_data(conn, df_contact_pardot, 'pardot_contact', 'replace')
+        save_data(sf_conn, df_contact_pardot, 'pardot_contact', 'replace')
 
         print('Start extracting journey data')
         # extract all journeys and save it locally
@@ -90,25 +92,25 @@ def main():
                               'salesforce',
                               'opportunity',
                               sf_settings).extract_data_sf()
-        save_data(conn, df_journey_sf, 'sf_journey_export', 'replace')
+        save_data(sf_conn, df_journey_sf, 'sf_journey_export', 'replace')
         # ------------------------- Pull out new dataset from local DB to insert and update in SF -----------------------------#
 
         # pardot insert
-        pardot_update_df = extract_data_db(conn, 'pardot_contact_update.sql')
+        pardot_update_df = extract_data_db(sf_conn, 'pardot_contact_update.sql')
         pardot_log_file, pardot_update_count = upr(sf_api, json_load(pardot_update_df)).update_contact_records()
-        save_data(conn, pardot_log_file, 'contact_log', 'append')
+        save_data(sf_conn, pardot_log_file, 'contact_log', 'append')
         # sf insert
-        contact_insert_df = extract_data_db(conn, 'contact_insert.sql')
+        contact_insert_df = extract_data_db(sf_conn, 'contact_insert.sql')
         contact_insert_df = contact_insert_df.drop(columns=['rowsha1', 'Id'])
         contact_log_file_insert, contact_insert_count = inr(sf_api, json_load(contact_insert_df)).insert_contact_sf()
-        save_data(conn, contact_log_file_insert, 'contact_log', 'append')
+        save_data(sf_conn, contact_log_file_insert, 'contact_log', 'append')
 
         # sf update
-        contact_update_df = extract_data_db(conn, 'contact_update.sql')
+        contact_update_df = extract_data_db(sf_conn, 'contact_update.sql')
         contact_update_df = contact_update_df.drop(columns=['rowsha1'])
         contact_log_file_update, contact_update_count = upr(sf_api,
                                                             json_load(contact_update_df)).update_contact_records()
-        save_data(conn, contact_log_file_update, 'contact_log', 'append')
+        save_data(sf_conn, contact_log_file_update, 'contact_log', 'append')
 
         # --------------------------- Create relationship table of contact, PMI and journey -----------------------------------#
 
@@ -134,38 +136,38 @@ def main():
         # Merge contact and journey file together to create a relationship table
         contact_journey_relation = pd.merge(df_contact_pmi, df_journey_contact, how='left', left_on='Contact_Id',
                                             right_on='Contact_Id')
-        save_data(conn, contact_journey_relation, 'contact_journey_relation', 'replace')
+        save_data(sf_conn, contact_journey_relation, 'contact_journey_relation', 'replace')
 
         # ------------------------------------------------- Update journey ----------------------------------------------------#
         print('Bulk Updating Journey')
-        journey_update_df = extract_data_db(conn, 'participant_journey_update.sql')
+        journey_update_df = extract_data_db(sf_conn, 'participant_journey_update.sql')
         journey_update_df = journey_update_df.drop(columns='Contact__c')
         bk(sf_api, journey_update_df, 'opportunity', 1000, 'update').bulk_upsert()
 
         print('Update withdrawal Participants')
         # update withdrawn participants
-        withdrawal_df = extract_data_db(conn, 'withdrawal_participant.sql')
+        withdrawal_df = extract_data_db(sf_conn, 'withdrawal_participant.sql')
         withdrawal_df_update = withdrawal_df[['Id', 'Contact__c', 'HP_Withdrawal_Date__c', 'HP_Withdrawal_Status__c']]
         withdrawal_log_file_update, withdrawal_update_count = upr(sf_api, json_load(
             withdrawal_df_update)).update_journey_records()
-        save_data(conn, withdrawal_log_file_update, 'journey_log', 'append')
+        save_data(sf_conn, withdrawal_log_file_update, 'journey_log', 'append')
         print('withdrawal status updated')
 
         # extract all salesforce contacts and save it locally again
         df_contact_sf = sfext(sf_api, 'extract_contact.sql', 'salesforce', 'contact', sf_settings).extract_data_sf()
-        save_data(conn, df_contact_sf, 'sf_contact', 'replace')
+        save_data(sf_conn, df_contact_sf, 'sf_contact', 'replace')
         print('sf contact data saved')
 
         # extract all pardot contacts and save it locally
         df_contact_pardot = sfext(sf_api, 'extract_pardot_contact.sql', 'pardot', 'contact',
                                   sf_settings).extract_data_sf()
-        save_data(conn, df_contact_pardot, 'pardot_contact', 'replace')
+        save_data(sf_conn, df_contact_pardot, 'pardot_contact', 'replace')
         print('pardot contact data saved')
 
         # extract all journeys and save it locally
         df_journey_sf = sfext(sf_api, 'extract_participant_journey.sql', 'salesforce', 'opportunity',
                               sf_settings).extract_data_sf()
-        save_data(conn, df_journey_sf, 'sf_journey_export', 'replace')
+        save_data(sf_conn, df_journey_sf, 'sf_journey_export', 'replace')
         print('journey data saved')
 
     except Exception as e:

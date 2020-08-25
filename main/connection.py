@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 import urllib
 
 
-def connect_sql_server(config_file):
+def connect_sql_server(config_file, database):
     """
     connect database using driver, server and database credentials
     :return: engine
@@ -15,12 +15,12 @@ def connect_sql_server(config_file):
         r'Server={};'
         r'Database={};'
         r'UID={};'
-        r'pwd={};'.format(config_file['driver'], config_file['server'], config_file['database'],config_file['uid'], config_file['pwd'])
+        r'pwd={};'.format(config_file['driver'], config_file['server'], database, config_file['uid'], config_file['pwd'])
     )
     quoted_conn_str = urllib.parse.quote_plus(conn_str)
     engine = create_engine('mssql+pyodbc:///?odbc_connect={}'.format(quoted_conn_str))
-    connection = engine.connect()
-    return connection
+    #connection = engine.connect()
+    return engine
 
 
 def execute_sql_query(conn, query):
